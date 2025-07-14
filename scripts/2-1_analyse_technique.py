@@ -1,8 +1,51 @@
 import os
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.widgets import Cursor
+import yfinance as yf
+import json
+
+def calcul_rsi(close_prices, window=14):
+    delta = close_prices.diff()
+    gain = delta.clip(lower=0)
+    loss = -delta.clip(upper=0)
+    avg_gain = gain.rolling(window=window).mean()
+    avg_loss = loss.rolling(window=window).mean()
+    rs = avg_gain / avg_loss
+    rsi = 100 - (100 / (1 + rs))
+    return rsi
+
+def telecharger_donnees(ticker, date_debut, date_fin):
+    data = yf.download(ticker, start=date_debut, end=date_fin, auto_adjust=True, group_by='ticker')
+    if data.empty:
+        raise ValueError("❌ Aucune donnée reçue.")
+    
+    if isinstance(data.columns, pd.MultiIndex):
+        data.columns = ['_'.join(col).strip() for col in data.columns.values]
+    
+    close_col = next((col for col in data.columns if col.endswith('_Close') or col == 'Close'), None)
+    if not close_col:
+        raise KeyError("❌ Colonne 'Close' introuvable.")
+    
+    return data, close_col
+
+def sauvegarder_parametres_simulation(S0, mu, sigma, T, chemin_fichier="Inputs-Outputs/parametres_monte_carlo.json"):
+    parametres = {
+        "S0": S0,
+        "mu": mu,
+        "sigma": sigma,
+        "T": T
+    }
+    # Crée le dossier s'il n'existe pas
+    os.makedirs(os.path.dirname(chemin_fichier), exist_ok=True)
+
+    with open(chemin_fichier, "w") as f:
+        json.dump(parametres, f)
+    print(f"✅ Paramètres sauvegardés dans {chemin_fichier}")
 
 def afficher_tous_graphiques(ticker="TTE.PA", date_debut="2020-01-01", date_fin=None):
     if date_fin is None:
-        # Calcul dynamique de la date de fin = jour ouvré précédent
         date_fin = pd.Timestamp.today()
         while date_fin.weekday() >= 5:
             date_fin -= pd.Timedelta(days=1)
@@ -20,7 +63,7 @@ def afficher_tous_graphiques(ticker="TTE.PA", date_debut="2020-01-01", date_fin=
     sigma = log_returns.std() * np.sqrt(252)
     S0 = data[close_col].iloc[-1]
     nb_jours = (data.index[-1] - data.index[0]).days
-    T = nb_jours / 365  # en années
+    T = nb_jours / 365
 
     sauvegarder_parametres_simulation(S0=S0.item(), mu=mu.item(), sigma=sigma.item(), T=T)
 
@@ -52,16 +95,14 @@ def afficher_tous_graphiques(ticker="TTE.PA", date_debut="2020-01-01", date_fin=
 
     plt.tight_layout()
 
-    # Crée le dossier s'il n'existe pas
     output_dir = "Inputs-Outputs"
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
+    os.makedirs(output_dir, exist_ok=True)
 
-    # Définit le chemin complet du fichier
     filepath = os.path.join(output_dir, f"{ticker}_graphique_{date_debut}_to_{date_fin}.png")
-
-    # Sauvegarde le graphique
     plt.savefig(filepath)
-    plt.close()  # ferme la figure pour libérer la mémoire
+    plt.close()
 
     print(f"✅ Graphique sauvegardé dans {filepath}")
+
+if __name__ == "__main__":
+    afficher_tous_graphiques()
