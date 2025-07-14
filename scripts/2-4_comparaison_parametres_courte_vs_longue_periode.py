@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 import yfinance as yf
@@ -54,7 +55,7 @@ def comparer_simulations(ticker="TTE.PA"):
     t_court, traj_court = simuler_trajectoires_monte_carlo(S0_court, mu_court, sigma_court, T, N, M)
 
     # Plot
-    plt.figure(figsize=(14,7))
+    plt.figure(figsize=(14, 7))
 
     # Longue période - en bleu
     for i in range(M):
@@ -71,7 +72,17 @@ def comparer_simulations(ticker="TTE.PA"):
     plt.ylabel("Prix simulé (€)")
     plt.legend()
     plt.grid(True)
-    plt.show()
+
+    # -- Sauvegarde dans Inputs-Outputs à la racine du repo --
+    output_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "Inputs-Outputs")
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    filepath = os.path.join(output_dir, f"{ticker}_comparaison_simulation_monte_carlo.png")
+    plt.savefig(filepath)
+    plt.close()
+
+    print(f"✅ Graphique sauvegardé dans {filepath}")
 
 if __name__ == "__main__":
     comparer_simulations()

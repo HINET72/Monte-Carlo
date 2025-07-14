@@ -1,3 +1,4 @@
+import os
 import yfinance as yf
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -12,7 +13,7 @@ def calcul_rsi(close_prices, window=14):
     avg_gain = gain.rolling(window=window).mean()
     avg_loss = loss.rolling(window=window).mean()
     rs = avg_gain / avg_loss
-    rsi = 100 - (100 / (1 + rs))
+    rsi = 100 - (100 / (1 + rs))    
     return rsi
 
 def telecharger_donnees(ticker, date_debut, date_fin):
@@ -60,13 +61,12 @@ def afficher_tous_graphiques(ticker="TTE.PA", date_debut="2020-01-01", date_fin=
     data['LogReturn'] = np.log(data[close_col] / data[close_col].shift(1))
     data = data.dropna(subset=['LogReturn'])
 
-    # **Utilisation des paramètres fixes au lieu de calcul dynamique**
+    # Utilisation des paramètres fixes
     S0 = 52.84
     mu = 0.07236838706371665
     sigma = 0.315083249588379
     T = 5.515068493150685
 
-    # Sauvegarde des paramètres (optionnel)
     sauvegarder_parametres_simulation(S0, mu, sigma, T)
 
     N = 252 * int(np.ceil(T))
@@ -99,20 +99,28 @@ def afficher_tous_graphiques(ticker="TTE.PA", date_debut="2020-01-01", date_fin=
 
     # Affichage des trajectoires Monte Carlo sur le graphique prix
     debut_simulation = data.index[-1]
-    temps_sim = np.linspace(0, T, N + 1)
-
-    # On convertit le temps simulé en dates pour l'axe X
-    dates_sim = pd.date_range(start=debut_simulation, periods=N+1, freq='B')  # B = jours ouvrés
+    dates_sim = pd.date_range(start=debut_simulation, periods=N+1, freq='B')  # jours ouvrés
 
     for i in range(M):
         ax1.plot(dates_sim, trajectoires[:, i], alpha=0.3, linestyle='--')
 
-    from matplotlib.widgets import Cursor
     cursor = Cursor(ax1, useblit=True, horizOn=True, vertOn=True, color='gray', linewidth=1)
     fig.canvas.mpl_connect('motion_notify_event', lambda event: fig.canvas.draw_idle())
 
     plt.tight_layout()
-    plt.show()
+
+    # Sauvegarde dans Inputs-Outputs à la racine du repo
+    racine_repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    output_dir = os.path.join(racine_repo, "Inputs-Outputs")
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    nom_fichier = f"{ticker}_graphiques_complets_{date_debut}_to_{date_fin}.png"
+    chemin_fichier = os.path.join(output_dir, nom_fichier)
+    fig.savefig(chemin_fichier)
+    plt.close(fig)
+
+    print(f"✅ Graphique sauvegardé dans {chemin_fichier}")
 
 if __name__ == "__main__":
     afficher_tous_graphiques()
