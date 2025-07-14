@@ -1,10 +1,9 @@
-import os
+import yfinance as yf
+import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.widgets import Cursor
-import yfinance as yf
 import json
+from matplotlib.widgets import Cursor
 
 def calcul_rsi(close_prices, window=14):
     delta = close_prices.diff()
@@ -30,24 +29,22 @@ def telecharger_donnees(ticker, date_debut, date_fin):
     
     return data, close_col
 
-def sauvegarder_parametres_simulation(S0, mu, sigma, T, chemin_fichier="Inputs-Outputs/parametres_monte_carlo.json"):
+def sauvegarder_parametres_simulation(S0, mu, sigma, T, chemin_fichier="parametres_monte_carlo.json"):
     parametres = {
         "S0": S0,
         "mu": mu,
         "sigma": sigma,
         "T": T
     }
-    # Crée le dossier s'il n'existe pas
-    os.makedirs(os.path.dirname(chemin_fichier), exist_ok=True)
-
     with open(chemin_fichier, "w") as f:
         json.dump(parametres, f)
     print(f"✅ Paramètres sauvegardés dans {chemin_fichier}")
 
 def afficher_tous_graphiques(ticker="TTE.PA", date_debut="2020-01-01", date_fin=None):
     if date_fin is None:
+        # Calcul dynamique de la date de fin = jour ouvré précédent
         date_fin = pd.Timestamp.today()
-        while date_fin.weekday() >= 5:
+        while date_fin.weekday() >= 5:  # 5 = samedi, 6 = dimanche
             date_fin -= pd.Timedelta(days=1)
         date_fin = date_fin.strftime("%Y-%m-%d")
 
@@ -63,7 +60,7 @@ def afficher_tous_graphiques(ticker="TTE.PA", date_debut="2020-01-01", date_fin=
     sigma = log_returns.std() * np.sqrt(252)
     S0 = data[close_col].iloc[-1]
     nb_jours = (data.index[-1] - data.index[0]).days
-    T = nb_jours / 365
+    T = nb_jours / 365  # en années
 
     sauvegarder_parametres_simulation(S0=S0.item(), mu=mu.item(), sigma=sigma.item(), T=T)
 
@@ -94,15 +91,7 @@ def afficher_tous_graphiques(ticker="TTE.PA", date_debut="2020-01-01", date_fin=
     fig.canvas.mpl_connect('motion_notify_event', lambda event: fig.canvas.draw_idle())
 
     plt.tight_layout()
-
-    output_dir = "Inputs-Outputs"
-    os.makedirs(output_dir, exist_ok=True)
-
-    filepath = os.path.join(output_dir, f"{ticker}_graphique_{date_debut}_to_{date_fin}.png")
-    plt.savefig(filepath)
-    plt.close()
-
-    print(f"✅ Graphique sauvegardé dans {filepath}")
+    plt.show()
 
 if __name__ == "__main__":
     afficher_tous_graphiques()
