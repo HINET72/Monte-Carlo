@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 import yfinance as yf
@@ -43,7 +44,18 @@ def exemple_monte_carlo_totalenergies():
     plt.xlabel("Temps (années)")
     plt.ylabel("Prix simulé (€)")
     plt.grid(True)
-    plt.show()
+
+    # --- sauvegarde dans Inputs-Outputs à la racine ---
+    # Calcul du chemin racine du repo (2 dossiers au-dessus du fichier)
+    output_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "Inputs-Outputs")
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    filepath = os.path.join(output_dir, f"monte_carlo_simulation_{int(T)}ans.png")
+    plt.savefig(filepath)
+    plt.close()
+
+    print(f"✅ Graphique sauvegardé dans {filepath}")
 
 if __name__ == "__main__":
     exemple_monte_carlo_totalenergies()

@@ -93,17 +93,17 @@ def afficher_tous_graphiques(ticker="TTE.PA", date_debut="2020-01-01", date_fin=
 
     plt.tight_layout()
 
-    # Création du dossier s'il n'existe pas
-    output_dir = "Inputs-Outputs"
+    # Chemin vers Inputs-Outputs à la racine du repo
+    output_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "Inputs-Outputs")
+
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-    # Nom et chemin du fichier image
+    # Chemin complet du fichier image
     filepath = os.path.join(output_dir, f"{ticker}_graphique_{date_debut}_to_{date_fin}.png")
 
-    # Sauvegarde de la figure
     fig.savefig(filepath)
-    plt.close(fig)  # ferme la figure pour libérer la mémoire
+    plt.close(fig)
 
     print(f"✅ Graphique sauvegardé dans {filepath}")
 
