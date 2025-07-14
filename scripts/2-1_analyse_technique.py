@@ -1,3 +1,4 @@
+import os
 import yfinance as yf
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -91,7 +92,20 @@ def afficher_tous_graphiques(ticker="TTE.PA", date_debut="2020-01-01", date_fin=
     fig.canvas.mpl_connect('motion_notify_event', lambda event: fig.canvas.draw_idle())
 
     plt.tight_layout()
-    plt.show()
+
+    # Création du dossier s'il n'existe pas
+    output_dir = "Inputs-Outputs"
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    # Nom et chemin du fichier image
+    filepath = os.path.join(output_dir, f"{ticker}_graphique_{date_debut}_to_{date_fin}.png")
+
+    # Sauvegarde de la figure
+    fig.savefig(filepath)
+    plt.close(fig)  # ferme la figure pour libérer la mémoire
+
+    print(f"✅ Graphique sauvegardé dans {filepath}")
 
 if __name__ == "__main__":
     afficher_tous_graphiques()
